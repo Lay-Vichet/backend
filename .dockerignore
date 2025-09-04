@@ -1,0 +1,34 @@
+# Ignore build outputs
+**/bin/
+**/obj/
+
+# Git
+.git
+.gitignore
+
+# IDE folders
+.vs/
+.vscode/
+.idea/
+
+# User secrets / local settings
+**/secrets.json
+**/appsettings.Development.json
+**/local.settings.json
+
+# NuGet
+**/packages/
+*.nupkg
+
+# Logs and temp
+*.log
+tmp/
+
+# Node
+node_modules/
+
+# Docker files
+Dockerfile*
+
+# Ignore published outputs in repo accidental commits
+**/publish/

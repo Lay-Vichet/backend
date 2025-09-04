@@ -1,0 +1,95 @@
+# Build artifacts
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+.history/
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+.nuget/packages/
+
+# DotNet Core and MSBuild
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Publish outputs
+publish/
+*.publishsettings
+
+# Database files
+*.mdf
+*.ldf
+*.sqlite
+*.db
+
+# Logs
+*.log
+logs/
+
+# Test results
+TestResults/
+*.trx
+coverage.opencover.xml
+coverage/*
+
+# User secrets
+secrets.json
+appsettings.Development.json
+local.settings.json
+
+# Rider and Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# JetBrains Rider
+.idea/
+
+# dotnet user-profile
+**/secrets.json
+
+# Coverage reports
+coverage*
+
+# Docker
+**/docker-compose.override.yml
+
+# Node
+node_modules/
+
+# Visual Studio Code workspace history
+.vscode/*history*
+
+# Ignore publish folder from dotnet publish
+**/bin/**/publish/
+
+# Ignore locks and writeable files
+*.log
+*.cache
+
+# Ensure local environment files are not checked in
+.env
+.env.*
+
+# Ignore NuGet config that may contain credentials
+NuGet.Config
