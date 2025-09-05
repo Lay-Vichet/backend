@@ -8,31 +8,59 @@ namespace SubscriptionTracker.Application.Services
 {
     public class SubscriptionPaymentService : ISubscriptionPaymentService
     {
-        private readonly IUnitOfWork _uow;
+        private readonly IUnitOfWorkFactory _uowFactory;
 
-        public SubscriptionPaymentService(IUnitOfWork uow)
+        public SubscriptionPaymentService(IUnitOfWorkFactory uowFactory)
         {
-            _uow = uow;
+            _uowFactory = uowFactory;
         }
 
-        public Task<IEnumerable<SubscriptionPaymentDto>> GetAllAsync() => _uow.SubscriptionPayments.GetAllAsync();
-        public Task<SubscriptionPaymentDto?> GetByIdAsync(Guid id) => _uow.SubscriptionPayments.GetByIdAsync(id);
-        public Task AddAsync(SubscriptionPaymentDto dto) => _uow.SubscriptionPayments.AddAsync(dto);
-        public Task UpdateAsync(SubscriptionPaymentDto dto) => _uow.SubscriptionPayments.UpdateAsync(dto);
-        public Task DeleteAsync(Guid id) => _uow.SubscriptionPayments.DeleteAsync(id);
+        public Task<IEnumerable<SubscriptionPaymentDto>> GetAllAsync()
+        {
+            var uow = _uowFactory.Create();
+            return uow.SubscriptionPayments.GetAllAsync();
+        }
+
+        public async Task<SubscriptionPaymentDto?> GetByIdAsync(Guid id)
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.SubscriptionPayments.GetByIdAsync(id);
+        }
+
+        public async Task AddAsync(SubscriptionPaymentDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SubscriptionPayments.AddAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task UpdateAsync(SubscriptionPaymentDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SubscriptionPayments.UpdateAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SubscriptionPayments.DeleteAsync(id);
+            await uow.CommitAsync();
+        }
 
         public async Task AddPaymentAndUpdateSubscriptionAsync(SubscriptionPaymentDto payment, SubscriptionTracker.Application.DTOs.SubscriptionDto updatedSubscription)
         {
+            await using var uow = _uowFactory.Create();
             try
             {
-                await _uow.SubscriptionPayments.AddAsync(payment);
-                await _uow.Subscriptions.UpdateAsync(updatedSubscription);
+                await uow.SubscriptionPayments.AddAsync(payment);
+                await uow.Subscriptions.UpdateAsync(updatedSubscription);
 
-                await _uow.CommitAsync();
+                await uow.CommitAsync();
             }
             catch
             {
-                await _uow.RollbackAsync();
+                await uow.RollbackAsync();
                 throw;
             }
         }

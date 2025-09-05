@@ -23,14 +23,28 @@ public class TransactionIntegrationTests
         }
 
         // apply migrations by executing SQL files from tests/Integration/migrations
-        var migrationsPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "tests", "Integration", "migrations"));
-        if (Directory.Exists(migrationsPath))
+        // apply migrations - search upward from the test binary location for tests/Integration/migrations
+        string? migrationsPath = null;
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current != null)
+        {
+            var candidate = Path.Combine(current.FullName, "tests", "Integration", "migrations");
+            if (Directory.Exists(candidate))
+            {
+                migrationsPath = candidate;
+                break;
+            }
+            current = current.Parent;
+        }
+        Console.WriteLine($"[TEST] Resolved migrationsPath: {migrationsPath}");
+        if (!string.IsNullOrEmpty(migrationsPath))
         {
             var files = Directory.GetFiles(migrationsPath, "*.sql").OrderBy(x => x);
             await using var connForMigrations = new NpgsqlConnection(connString);
             await connForMigrations.OpenAsync();
             foreach (var file in files)
             {
+                Console.WriteLine($"[TEST] Applying migration: {file}");
                 var sql = await File.ReadAllTextAsync(file);
                 await connForMigrations.ExecuteAsync(sql);
             }
@@ -120,12 +134,13 @@ public class DbUnitOfWorkAdapter : IUnitOfWork
     public ISubscriptionPaymentRepository SubscriptionPayments => throw new NotImplementedException();
     public ISubscriptionRatingRepository SubscriptionRatings => throw new NotImplementedException();
     public ISubscriptionUsageRepository SubscriptionUsages => throw new NotImplementedException();
-    public IUserRepository Users => throw new NotImplementedException();
+    public IUserRepository Users { get; }
 
     public DbUnitOfWorkAdapter(IDbTransactionScopeFactory txFactory, IDbConnectionFactory connectionFactory)
     {
         _scope = txFactory.BeginTransaction();
         Subscriptions = new DapperSubscriptionRepository(connectionFactory, _scope);
+        Users = new SubscriptionTracker.Infrastructure.Repositories.DapperUserRepository(connectionFactory, _scope);
     }
 
     public Task CommitAsync()

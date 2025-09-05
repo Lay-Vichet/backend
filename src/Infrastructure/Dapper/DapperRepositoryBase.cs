@@ -1,6 +1,5 @@
 using System.Data;
 using SubscriptionTracker.Application.Interfaces;
-using SubscriptionTracker.Infrastructure;
 
 namespace SubscriptionTracker.Infrastructure.Dapper;
 

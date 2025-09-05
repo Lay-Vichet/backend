@@ -8,14 +8,41 @@ namespace SubscriptionTracker.Application.Services
 {
     public class SharedSubscriptionService : ISharedSubscriptionService
     {
-        private readonly IUnitOfWork _uow;
+        private readonly IUnitOfWorkFactory _uowFactory;
 
-        public SharedSubscriptionService(IUnitOfWork uow) => _uow = uow;
+        public SharedSubscriptionService(IUnitOfWorkFactory uowFactory) => _uowFactory = uowFactory;
 
-        public Task<IEnumerable<SharedSubscriptionDto>> GetAllAsync() => _uow.SharedSubscriptions.GetAllAsync();
-        public Task<SharedSubscriptionDto?> GetByIdAsync(Guid subscriptionId, Guid householdId) => _uow.SharedSubscriptions.GetByIdAsync(subscriptionId, householdId);
-        public Task AddAsync(SharedSubscriptionDto dto) => _uow.SharedSubscriptions.AddAsync(dto);
-        public Task UpdateAsync(SharedSubscriptionDto dto) => _uow.SharedSubscriptions.UpdateAsync(dto);
-        public Task DeleteAsync(Guid subscriptionId, Guid householdId) => _uow.SharedSubscriptions.DeleteAsync(subscriptionId, householdId);
+        public async Task<IEnumerable<SharedSubscriptionDto>> GetAllAsync()
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.SharedSubscriptions.GetAllAsync();
+        }
+
+        public async Task<SharedSubscriptionDto?> GetByIdAsync(Guid subscriptionId, Guid householdId)
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.SharedSubscriptions.GetByIdAsync(subscriptionId, householdId);
+        }
+
+        public async Task AddAsync(SharedSubscriptionDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SharedSubscriptions.AddAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task UpdateAsync(SharedSubscriptionDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SharedSubscriptions.UpdateAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task DeleteAsync(Guid subscriptionId, Guid householdId)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SharedSubscriptions.DeleteAsync(subscriptionId, householdId);
+            await uow.CommitAsync();
+        }
     }
 }

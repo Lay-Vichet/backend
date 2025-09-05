@@ -8,14 +8,41 @@ namespace SubscriptionTracker.Application.Services
 {
     public class HouseholdMemberService : IHouseholdMemberService
     {
-        private readonly IUnitOfWork _uow;
+        private readonly IUnitOfWorkFactory _uowFactory;
 
-        public HouseholdMemberService(IUnitOfWork uow) => _uow = uow;
+        public HouseholdMemberService(IUnitOfWorkFactory uowFactory) => _uowFactory = uowFactory;
 
-        public Task<IEnumerable<HouseholdMemberDto>> GetAllAsync() => _uow.HouseholdMembers.GetAllAsync();
-        public Task<HouseholdMemberDto?> GetByIdAsync(Guid householdId, Guid userId) => _uow.HouseholdMembers.GetByIdAsync(householdId, userId);
-        public Task AddAsync(HouseholdMemberDto dto) => _uow.HouseholdMembers.AddAsync(dto);
-        public Task UpdateAsync(HouseholdMemberDto dto) => _uow.HouseholdMembers.UpdateAsync(dto);
-        public Task DeleteAsync(Guid householdId, Guid userId) => _uow.HouseholdMembers.DeleteAsync(householdId, userId);
+        public async Task<IEnumerable<HouseholdMemberDto>> GetAllAsync()
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.HouseholdMembers.GetAllAsync();
+        }
+
+        public async Task<HouseholdMemberDto?> GetByIdAsync(Guid householdId, Guid userId)
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.HouseholdMembers.GetByIdAsync(householdId, userId);
+        }
+
+        public async Task AddAsync(HouseholdMemberDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.HouseholdMembers.AddAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task UpdateAsync(HouseholdMemberDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.HouseholdMembers.UpdateAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task DeleteAsync(Guid householdId, Guid userId)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.HouseholdMembers.DeleteAsync(householdId, userId);
+            await uow.CommitAsync();
+        }
     }
 }

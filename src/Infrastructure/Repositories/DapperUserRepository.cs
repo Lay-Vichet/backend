@@ -13,10 +13,11 @@ public class DapperUserRepository : DapperRepositoryBase, IUserRepository
 
     public async Task AddAsync(UserDto dto, SubscriptionTracker.Application.Interfaces.IDbTransactionScope? scope = null)
     {
-        const string sql = @"INSERT INTO users (user_id, email, password_hash) VALUES (@UserId, @Email, @PasswordHash);";
-        if (scope is not null)
+        const string sql = @"INSERT INTO users (user_id, email, password_hash, created_at) VALUES (@UserId, @Email, @PasswordHash, @CreatedAt);";
+        var effectiveScope = scope ?? RepositoryTransactionScope;
+        if (effectiveScope is not null)
         {
-            await scope.Connection.ExecuteAsync(sql, dto, scope.Transaction);
+            await effectiveScope.Connection.ExecuteAsync(sql, dto, effectiveScope.Transaction);
             return;
         }
 
@@ -28,9 +29,10 @@ public class DapperUserRepository : DapperRepositoryBase, IUserRepository
     public async Task DeleteAsync(Guid id, SubscriptionTracker.Application.Interfaces.IDbTransactionScope? scope = null)
     {
         const string sql = "DELETE FROM users WHERE user_id = @Id";
-        if (scope is not null)
+        var effectiveScope = scope ?? RepositoryTransactionScope;
+        if (effectiveScope is not null)
         {
-            await scope.Connection.ExecuteAsync(sql, new { Id = id }, scope.Transaction);
+            await effectiveScope.Connection.ExecuteAsync(sql, new { Id = id }, effectiveScope.Transaction);
             return;
         }
 
@@ -46,6 +48,13 @@ public class DapperUserRepository : DapperRepositoryBase, IUserRepository
         return await conn.QueryAsync<UserDto>(sql);
     }
 
+    public async Task<UserDto?> GetByEmailAsync(string email)
+    {
+        const string sql = @"SELECT user_id AS UserId, email AS Email, password_hash AS PasswordHash, created_at as CreatedAt FROM users WHERE email = @Email";
+        using var conn = CreateConnection();
+        return await conn.QueryFirstOrDefaultAsync<UserDto>(sql, new { Email = email });
+    }
+
     public async Task<UserDto?> GetByIdAsync(Guid id)
     {
         const string sql = @"SELECT user_id AS UserId, email AS Email, password_hash AS PasswordHash FROM users WHERE user_id = @Id";
@@ -56,9 +65,10 @@ public class DapperUserRepository : DapperRepositoryBase, IUserRepository
     public async Task UpdateAsync(UserDto dto, SubscriptionTracker.Application.Interfaces.IDbTransactionScope? scope = null)
     {
         const string sql = @"UPDATE users SET email = @Email, password_hash = @PasswordHash WHERE user_id = @UserId";
-        if (scope is not null)
+        var effectiveScope = scope ?? RepositoryTransactionScope;
+        if (effectiveScope is not null)
         {
-            await scope.Connection.ExecuteAsync(sql, dto, scope.Transaction);
+            await effectiveScope.Connection.ExecuteAsync(sql, dto, effectiveScope.Transaction);
             return;
         }
 

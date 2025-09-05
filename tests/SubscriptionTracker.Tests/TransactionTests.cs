@@ -77,6 +77,37 @@ namespace SubscriptionTracker.Tests
             }
         }
 
+        // Simple factory wrapper that returns a non-disposing adapter around the provided IUnitOfWork instance.
+        // This preserves the test's expectation that the underlying FakeUnitOfWork isn't disposed by callers.
+        class FakeUnitOfWorkFactory : IUnitOfWorkFactory
+        {
+            private readonly IUnitOfWork _uow;
+            public FakeUnitOfWorkFactory(IUnitOfWork uow) => _uow = uow;
+            public IUnitOfWork Create() => new NonDisposingUnitOfWork(_uow);
+
+            private class NonDisposingUnitOfWork : IUnitOfWork
+            {
+                private readonly IUnitOfWork _inner;
+                public NonDisposingUnitOfWork(IUnitOfWork inner) => _inner = inner;
+
+                public ISubscriptionRepository Subscriptions => _inner.Subscriptions;
+                public ICategoryRepository Categories => _inner.Categories;
+                public IHouseholdRepository Households => _inner.Households;
+                public IHouseholdMemberRepository HouseholdMembers => _inner.HouseholdMembers;
+                public IPaymentMethodRepository PaymentMethods => _inner.PaymentMethods;
+                public ISharedSubscriptionRepository SharedSubscriptions => _inner.SharedSubscriptions;
+                public ISubscriptionCategoryRepository SubscriptionCategories => _inner.SubscriptionCategories;
+                public ISubscriptionPaymentRepository SubscriptionPayments => _inner.SubscriptionPayments;
+                public ISubscriptionRatingRepository SubscriptionRatings => _inner.SubscriptionRatings;
+                public ISubscriptionUsageRepository SubscriptionUsages => _inner.SubscriptionUsages;
+                public IUserRepository Users => _inner.Users;
+
+                public Task CommitAsync() => _inner.CommitAsync();
+                public Task RollbackAsync() => _inner.RollbackAsync();
+                public ValueTask DisposeAsync() => ValueTask.CompletedTask; // intentionally no-op
+            }
+        }
+
         class FakePaymentRepo : ISubscriptionPaymentRepository
         {
             public bool Added { get; private set; }
@@ -114,7 +145,7 @@ namespace SubscriptionTracker.Tests
             var subRepo = new FakeSubscriptionRepo();
             var uow = new FakeUnitOfWork(payRepo, subRepo);
 
-            var svc = new SubscriptionPaymentService(uow);
+            var svc = new SubscriptionPaymentService(new FakeUnitOfWorkFactory(uow));
 
             var payment = new SubscriptionPaymentDto { PaymentId = Guid.NewGuid(), SubscriptionId = Guid.NewGuid(), Amount = 10m, PaymentDate = DateTime.UtcNow, CreatedAt = DateTime.UtcNow };
             var sub = new SubscriptionDto { Id = payment.SubscriptionId, Name = "s", MonthlyCost = 1m, StartDate = DateTime.UtcNow };
@@ -134,7 +165,7 @@ namespace SubscriptionTracker.Tests
             var subRepo = new FakeSubscriptionRepo { ThrowOnUpdate = true };
             var uow = new FakeUnitOfWork(payRepo, subRepo);
 
-            var svc = new SubscriptionPaymentService(uow);
+            var svc = new SubscriptionPaymentService(new FakeUnitOfWorkFactory(uow));
 
             var payment = new SubscriptionPaymentDto { PaymentId = Guid.NewGuid(), SubscriptionId = Guid.NewGuid(), Amount = 10m, PaymentDate = DateTime.UtcNow, CreatedAt = DateTime.UtcNow };
             var sub = new SubscriptionDto { Id = payment.SubscriptionId, Name = "s", MonthlyCost = 1m, StartDate = DateTime.UtcNow };

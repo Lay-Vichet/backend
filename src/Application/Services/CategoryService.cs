@@ -8,17 +8,44 @@ namespace SubscriptionTracker.Application.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly IUnitOfWork _uow;
+        private readonly IUnitOfWorkFactory _uowFactory;
 
-        public CategoryService(IUnitOfWork uow)
+        public CategoryService(IUnitOfWorkFactory uowFactory)
         {
-            _uow = uow;
+            _uowFactory = uowFactory;
         }
 
-        public Task<IEnumerable<CategoryDto>> GetAllAsync() => _uow.Categories.GetAllAsync();
-        public Task<CategoryDto?> GetByIdAsync(Guid id) => _uow.Categories.GetByIdAsync(id);
-        public Task AddAsync(CategoryDto dto) => _uow.Categories.AddAsync(dto);
-        public Task UpdateAsync(CategoryDto dto) => _uow.Categories.UpdateAsync(dto);
-        public Task DeleteAsync(Guid id) => _uow.Categories.DeleteAsync(id);
+        public async Task<IEnumerable<CategoryDto>> GetAllAsync()
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.Categories.GetAllAsync();
+        }
+
+        public async Task<CategoryDto?> GetByIdAsync(Guid id)
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.Categories.GetByIdAsync(id);
+        }
+
+        public async Task AddAsync(CategoryDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.Categories.AddAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task UpdateAsync(CategoryDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.Categories.UpdateAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.Categories.DeleteAsync(id);
+            await uow.CommitAsync();
+        }
     }
 }

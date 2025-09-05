@@ -8,14 +8,41 @@ namespace SubscriptionTracker.Application.Services
 {
     public class SubscriptionCategoryService : ISubscriptionCategoryService
     {
-        private readonly IUnitOfWork _uow;
+        private readonly IUnitOfWorkFactory _uowFactory;
 
-        public SubscriptionCategoryService(IUnitOfWork uow) => _uow = uow;
+        public SubscriptionCategoryService(IUnitOfWorkFactory uowFactory) => _uowFactory = uowFactory;
 
-        public Task<IEnumerable<SubscriptionCategoryDto>> GetAllAsync() => _uow.SubscriptionCategories.GetAllAsync();
-        public Task<SubscriptionCategoryDto?> GetByIdAsync(Guid subscriptionId, Guid categoryId) => _uow.SubscriptionCategories.GetByIdAsync(subscriptionId, categoryId);
-        public Task AddAsync(SubscriptionCategoryDto dto) => _uow.SubscriptionCategories.AddAsync(dto);
-        public Task UpdateAsync(SubscriptionCategoryDto dto) => _uow.SubscriptionCategories.UpdateAsync(dto);
-        public Task DeleteAsync(Guid subscriptionId, Guid categoryId) => _uow.SubscriptionCategories.DeleteAsync(subscriptionId, categoryId);
+        public async Task<IEnumerable<SubscriptionCategoryDto>> GetAllAsync()
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.SubscriptionCategories.GetAllAsync();
+        }
+
+        public async Task<SubscriptionCategoryDto?> GetByIdAsync(Guid subscriptionId, Guid categoryId)
+        {
+            await using var uow = _uowFactory.Create();
+            return await uow.SubscriptionCategories.GetByIdAsync(subscriptionId, categoryId);
+        }
+
+        public async Task AddAsync(SubscriptionCategoryDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SubscriptionCategories.AddAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task UpdateAsync(SubscriptionCategoryDto dto)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SubscriptionCategories.UpdateAsync(dto);
+            await uow.CommitAsync();
+        }
+
+        public async Task DeleteAsync(Guid subscriptionId, Guid categoryId)
+        {
+            await using var uow = _uowFactory.Create();
+            await uow.SubscriptionCategories.DeleteAsync(subscriptionId, categoryId);
+            await uow.CommitAsync();
+        }
     }
 }

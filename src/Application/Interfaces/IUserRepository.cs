@@ -7,6 +7,7 @@ namespace SubscriptionTracker.Application.Interfaces
 {
     public interface IUserRepository
     {
+        Task<UserDto?> GetByEmailAsync(string email);
         Task<IEnumerable<UserDto>> GetAllAsync();
         Task<UserDto?> GetByIdAsync(Guid id);
         Task AddAsync(UserDto dto, IDbTransactionScope? scope = null);
