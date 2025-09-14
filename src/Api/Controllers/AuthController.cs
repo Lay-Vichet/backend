@@ -26,7 +26,7 @@ namespace SubscriptionTracker.Api.Controllers
             try
             {
                 var res = await _authService.RegisterAsync(request);
-                return CreatedAtAction(null, new { token = res.Token, expiresIn = res.ExpiresInSeconds });
+                return CreatedAtAction(null, new { userId = res });
             }
             catch (InvalidOperationException ex)
             {

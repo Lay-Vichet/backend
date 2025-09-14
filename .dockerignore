@@ -13,7 +13,7 @@
 
 # User secrets / local settings
 **/secrets.json
-**/appsettings.Development.json
+#**/appsettings.Development.json
 **/local.settings.json
 
 # NuGet

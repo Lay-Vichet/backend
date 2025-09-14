@@ -25,11 +25,12 @@ public class AuthServiceTests
         var uowFactoryMock = new Mock<IUnitOfWorkFactory>();
         uowFactoryMock.Setup(f => f.Create()).Returns(uowMock.Object);
 
-        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "01234567890123456789012345678901"), new KeyValuePair<string, string?>("JWT:ExpiresMinutes", "60") }).Build();
+        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "0123456789012345678901234567890123456789012345678901234567890123"), new KeyValuePair<string, string?>("JWT:ExpiresMinutes", "60") }).Build();
         var svc = new AuthService(uowFactoryMock.Object, config);
 
         var res = await svc.RegisterAsync(new RegisterRequest { Email = "a@b.com", Password = "Password1!" });
-        Assert.False(string.IsNullOrEmpty(res.Token));
+        Assert.IsType<Guid>(res);
+        Assert.NotEqual(Guid.Empty, res);
     }
 
     [Fact]
@@ -45,7 +46,7 @@ public class AuthServiceTests
         var uowFactoryMock = new Mock<IUnitOfWorkFactory>();
         uowFactoryMock.Setup(f => f.Create()).Returns(uowMock.Object);
 
-        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "01234567890123456789012345678901") }).Build();
+        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "0123456789012345678901234567890123456789012345678901234567890123") }).Build();
         var svc = new AuthService(uowFactoryMock.Object, config);
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await svc.RegisterAsync(new RegisterRequest { Email = "a@b.com", Password = "Password1!" }));
@@ -67,7 +68,7 @@ public class AuthServiceTests
         var uowFactoryMock = new Mock<IUnitOfWorkFactory>();
         uowFactoryMock.Setup(f => f.Create()).Returns(uowMock.Object);
 
-        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "01234567890123456789012345678901") }).Build();
+        var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "0123456789012345678901234567890123456789012345678901234567890123") }).Build();
         var svc = new AuthService(uowFactoryMock.Object, config);
 
         var res = await svc.LoginAsync(new LoginRequest { Email = "a@b.com", Password = password });

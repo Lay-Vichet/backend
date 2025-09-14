@@ -21,30 +21,29 @@ namespace SubscriptionTracker.Application.Services
             return toCreate;
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(Guid id, Guid userId)
         {
             await using var uow = _uowFactory.Create();
-            await uow.Subscriptions.DeleteAsync(id);
+            await uow.Subscriptions.DeleteAsync(id, userId);
             await uow.CommitAsync();
         }
 
-        public async Task<IEnumerable<SubscriptionDto>> GetAllAsync()
+        public async Task<IEnumerable<SubscriptionDto>> GetAllAsync(Guid userId)
         {
             await using var uow = _uowFactory.Create();
-            return await uow.Subscriptions.GetAllAsync();
+            return await uow.Subscriptions.GetAllAsync(userId);
         }
 
-        public async Task<SubscriptionDto?> GetByIdAsync(Guid id)
+        public async Task<SubscriptionDto?> GetByIdAsync(Guid id, Guid userId)
         {
             await using var uow = _uowFactory.Create();
-            return await uow.Subscriptions.GetByIdAsync(id);
+            return await uow.Subscriptions.GetByIdAsync(id, userId);
         }
 
         public async Task UpdateAsync(Guid id, SubscriptionDto dto)
         {
             await using var uow = _uowFactory.Create();
-            var existing = await uow.Subscriptions.GetByIdAsync(id);
-            if (existing is null) throw new KeyNotFoundException("Subscription not found");
+            var existing = await uow.Subscriptions.GetByIdAsync(id, dto.UserId) ?? throw new KeyNotFoundException("Subscription not found");
             var updated = dto with { Id = id };
             await uow.Subscriptions.UpdateAsync(updated);
             await uow.CommitAsync();

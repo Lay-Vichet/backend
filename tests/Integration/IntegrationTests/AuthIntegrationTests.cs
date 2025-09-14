@@ -16,8 +16,8 @@ public class AuthIntegrationTests
     private IConfiguration BuildConfig()
     {
         var configBuilder = new ConfigurationBuilder();
-        // Use a 32-character key for HS256 in tests
-        configBuilder.AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "test-secret-which-is-not-secureX"), new KeyValuePair<string, string?>("JWT:ExpiresMinutes", "60") });
+        // Use a sufficiently long key for HS256 in tests
+        configBuilder.AddInMemoryCollection(new[] { new KeyValuePair<string, string?>("JWT:Key", "test-secret-which-is-not-secure-and-long-enough-for-hs256-0123456789"), new KeyValuePair<string, string?>("JWT:ExpiresMinutes", "60") });
         return configBuilder.Build();
     }
 
@@ -64,7 +64,7 @@ public class AuthIntegrationTests
         var email = $"test{System.Guid.NewGuid():N}@example.com";
         var register = new RegisterRequest { Email = email, Password = "Password123!" };
         var resp = await authService.RegisterAsync(register);
-        Assert.False(string.IsNullOrEmpty(resp.Token));
+        Assert.False(Guid.Empty.Equals(resp));
 
         var login = new LoginRequest { Email = email, Password = "Password123!" };
         var loginResp = await authService.LoginAsync(login);
@@ -96,13 +96,13 @@ public class AuthIntegrationTests
         IUnitOfWorkFactory uowFactory = new TestUnitOfWorkFactory(txFactory, connectionFactory);
         var authService = new AuthService(uowFactory, BuildConfig());
 
-        var email = $"dup{System.Guid.NewGuid():N}@example.com";
+        var email = $"dup{Guid.NewGuid():N}@example.com";
         var register = new RegisterRequest { Email = email, Password = "Password123!" };
         var resp = await authService.RegisterAsync(register);
-        Assert.False(string.IsNullOrEmpty(resp.Token));
+        Assert.False(Guid.Empty.Equals(resp));
 
         // second registration should throw InvalidOperationException
-        await Assert.ThrowsAsync<System.InvalidOperationException>(async () => await authService.RegisterAsync(register));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await authService.RegisterAsync(register));
     }
 }
 

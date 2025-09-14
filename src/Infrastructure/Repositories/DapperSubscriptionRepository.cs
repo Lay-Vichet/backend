@@ -1,23 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Threading.Tasks;
 using Dapper;
 using SubscriptionTracker.Application.DTOs;
 using SubscriptionTracker.Application.Interfaces;
 using SubscriptionTracker.Infrastructure.Dapper;
-using SubscriptionTracker.Infrastructure;
 
 namespace SubscriptionTracker.Infrastructure.Repositories;
 
 public class DapperSubscriptionRepository : DapperRepositoryBase, ISubscriptionRepository
 {
-    public DapperSubscriptionRepository(IDbConnectionFactory db, SubscriptionTracker.Application.Interfaces.IDbTransactionScope? scope = null) : base(db, scope) { }
+    public DapperSubscriptionRepository(IDbConnectionFactory db, IDbTransactionScope? scope = null) : base(db, scope) { }
 
-    public async Task AddAsync(SubscriptionDto subscription, SubscriptionTracker.Application.Interfaces.IDbTransactionScope? scope = null)
+    public async Task AddAsync(SubscriptionDto subscription, IDbTransactionScope? scope = null)
     {
-        const string sql = @"INSERT INTO subscriptions (id, name, monthly_cost, start_date)
-VALUES (@Id, @Name, @MonthlyCost, @StartDate);";
+        const string sql = @"INSERT INTO subscriptions (subscription_id, user_id, name, cost, currency, billing_cycle, start_date, next_due_date, notes, created_at)
+VALUES (@Id, @UserId, @Name, @Cost, @Currency, @BillingCycle, @StartDate, @NextDueDate, @Notes, @CreatedAt);";
         var effectiveScope = scope ?? RepositoryTransactionScope;
         if (effectiveScope is not null)
         {
@@ -30,41 +25,41 @@ VALUES (@Id, @Name, @MonthlyCost, @StartDate);";
         localScope.Commit();
     }
 
-    public async Task DeleteAsync(Guid id, SubscriptionTracker.Application.Interfaces.IDbTransactionScope? scope = null)
+    public async Task DeleteAsync(Guid id, Guid userId, IDbTransactionScope? scope = null)
     {
-        const string sql = "DELETE FROM subscriptions WHERE id = @Id";
+        const string sql = "DELETE FROM subscriptions WHERE subscription_id = @Id AND user_id = @UserId";
         var effectiveScope = scope ?? RepositoryTransactionScope;
         if (effectiveScope is not null)
         {
-            await effectiveScope.Connection.ExecuteAsync(sql, new { Id = id }, effectiveScope.Transaction);
+            await effectiveScope.Connection.ExecuteAsync(sql, new { Id = id, UserId = userId }, effectiveScope.Transaction);
             return;
         }
 
         using var localScope = BeginTransaction();
-        await localScope.Connection.ExecuteAsync(sql, new { Id = id }, localScope.Transaction);
+        await localScope.Connection.ExecuteAsync(sql, new { Id = id, UserId = userId }, localScope.Transaction);
         localScope.Commit();
     }
 
-    public async Task<IEnumerable<SubscriptionDto>> GetAllAsync()
+    public async Task<IEnumerable<SubscriptionDto>> GetAllAsync(Guid userId)
     {
-        const string sql = @"SELECT id AS Id, name AS Name, monthly_cost AS MonthlyCost, start_date AS StartDate
-FROM subscriptions";
+        const string sql = @"SELECT subscription_id AS Id, name AS Name, cost AS Cost, currency AS Currency, billing_cycle AS BillingCycle, start_date AS StartDate, next_due_date AS NextDueDate, notes AS Notes
+FROM subscriptions WHERE user_id = @UserId";
         using var conn = CreateConnection();
-        return await conn.QueryAsync<SubscriptionDto>(sql);
+        return await conn.QueryAsync<SubscriptionDto>(sql, new { UserId = userId });
     }
 
-    public async Task<SubscriptionDto?> GetByIdAsync(Guid id)
+    public async Task<SubscriptionDto?> GetByIdAsync(Guid id, Guid userId)
     {
-        const string sql = @"SELECT id AS Id, name AS Name, monthly_cost AS MonthlyCost, start_date AS StartDate
-FROM subscriptions WHERE id = @Id";
+        const string sql = @"SELECT subscription_id AS Id, name AS Name, cost AS Cost, currency AS Currency, billing_cycle AS BillingCycle, start_date AS StartDate, next_due_date AS NextDueDate, notes AS Notes
+FROM subscriptions WHERE subscription_id = @Id AND user_id = @UserId";
         using var conn = CreateConnection();
-        return await conn.QueryFirstOrDefaultAsync<SubscriptionDto>(sql, new { Id = id });
+        return await conn.QueryFirstOrDefaultAsync<SubscriptionDto>(sql, new { Id = id, UserId = userId });
     }
 
-    public async Task UpdateAsync(SubscriptionDto subscription, SubscriptionTracker.Application.Interfaces.IDbTransactionScope? scope = null)
+    public async Task UpdateAsync(SubscriptionDto subscription, IDbTransactionScope? scope = null)
     {
-        const string sql = @"UPDATE subscriptions SET name = @Name, monthly_cost = @MonthlyCost, start_date = @StartDate
-WHERE id = @Id";
+        const string sql = @"UPDATE subscriptions SET name = @Name, cost = @Cost, currency = @Currency, billing_cycle = @BillingCycle, start_date = @StartDate, next_due_date = @NextDueDate, notes = @Notes
+WHERE subscription_id = @Id AND user_id = @UserId";
         var effectiveScope = scope ?? RepositoryTransactionScope;
         if (effectiveScope is not null)
         {

@@ -60,7 +60,7 @@ public class TransactionIntegrationTests
         await using var uow = new DbUnitOfWorkAdapter(txFactory, connectionFactory); // adapter we'll implement below in test project
 
         var id = Guid.NewGuid();
-        await uow.Subscriptions.AddAsync(new SubscriptionDto { Id = id, Name = "committed", MonthlyCost = 1.23M, StartDate = System.DateTime.UtcNow });
+        await uow.Subscriptions.AddAsync(new SubscriptionDto { Id = id, Name = "committed", Cost = 1.23M, Currency = "USD", BillingCycle = "Monthly", StartDate = System.DateTime.UtcNow });
         await uow.CommitAsync();
         await uow.DisposeAsync();
 
@@ -101,7 +101,7 @@ public class TransactionIntegrationTests
         await using var uow = new DbUnitOfWorkAdapter(txFactory, connectionFactory);
 
         var id = Guid.NewGuid();
-        await uow.Subscriptions.AddAsync(new SubscriptionDto { Id = id, Name = "rolledback", MonthlyCost = 4.56M, StartDate = System.DateTime.UtcNow });
+        await uow.Subscriptions.AddAsync(new SubscriptionDto { Id = id, Name = "rolledback", Cost = 4.56M, Currency = "USD", BillingCycle = "Monthly", StartDate = System.DateTime.UtcNow });
         await uow.RollbackAsync();
         await uow.DisposeAsync();
 

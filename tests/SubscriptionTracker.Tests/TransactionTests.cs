@@ -127,9 +127,9 @@ namespace SubscriptionTracker.Tests
             public bool Updated { get; private set; }
             public bool ThrowOnUpdate { get; set; }
             public Task AddAsync(SubscriptionDto subscription, IDbTransactionScope? scope = null) => Task.CompletedTask;
-            public Task DeleteAsync(Guid id, IDbTransactionScope? scope = null) => Task.CompletedTask;
-            public Task<IEnumerable<SubscriptionDto>> GetAllAsync() => Task.FromResult<IEnumerable<SubscriptionDto>>(Array.Empty<SubscriptionDto>());
-            public Task<SubscriptionDto?> GetByIdAsync(Guid id) => Task.FromResult<SubscriptionDto?>(null);
+            public Task DeleteAsync(Guid id, Guid userId, IDbTransactionScope? scope = null) => Task.CompletedTask;
+            public Task<IEnumerable<SubscriptionDto>> GetAllAsync(Guid userId) => Task.FromResult<IEnumerable<SubscriptionDto>>(Array.Empty<SubscriptionDto>());
+            public Task<SubscriptionDto?> GetByIdAsync(Guid id, Guid userId) => Task.FromResult<SubscriptionDto?>(null);
             public Task UpdateAsync(SubscriptionDto subscription, IDbTransactionScope? scope = null)
             {
                 if (ThrowOnUpdate) throw new InvalidOperationException("update failed");
@@ -148,7 +148,7 @@ namespace SubscriptionTracker.Tests
             var svc = new SubscriptionPaymentService(new FakeUnitOfWorkFactory(uow));
 
             var payment = new SubscriptionPaymentDto { PaymentId = Guid.NewGuid(), SubscriptionId = Guid.NewGuid(), Amount = 10m, PaymentDate = DateTime.UtcNow, CreatedAt = DateTime.UtcNow };
-            var sub = new SubscriptionDto { Id = payment.SubscriptionId, Name = "s", MonthlyCost = 1m, StartDate = DateTime.UtcNow };
+            var sub = new SubscriptionDto { Id = payment.SubscriptionId, Name = "s", Cost = 1m, Currency = "USD", BillingCycle = "Monthly", StartDate = DateTime.UtcNow };
 
             await svc.AddPaymentAndUpdateSubscriptionAsync(payment, sub);
 
@@ -168,7 +168,7 @@ namespace SubscriptionTracker.Tests
             var svc = new SubscriptionPaymentService(new FakeUnitOfWorkFactory(uow));
 
             var payment = new SubscriptionPaymentDto { PaymentId = Guid.NewGuid(), SubscriptionId = Guid.NewGuid(), Amount = 10m, PaymentDate = DateTime.UtcNow, CreatedAt = DateTime.UtcNow };
-            var sub = new SubscriptionDto { Id = payment.SubscriptionId, Name = "s", MonthlyCost = 1m, StartDate = DateTime.UtcNow };
+            var sub = new SubscriptionDto { Id = payment.SubscriptionId, Name = "s", Cost = 1m, Currency = "USD", BillingCycle = "Monthly", StartDate = DateTime.UtcNow };
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => svc.AddPaymentAndUpdateSubscriptionAsync(payment, sub));
 

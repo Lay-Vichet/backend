@@ -1,5 +1,5 @@
-using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace SubscriptionTracker.Application.DTOs
 {
@@ -23,10 +23,12 @@ namespace SubscriptionTracker.Application.DTOs
         [Required]
         public string Password { get; set; } = string.Empty;
     }
-
     public sealed class AuthResponse
     {
+        [JsonPropertyName("access_token")]
         public string Token { get; set; } = string.Empty;
+
+        [JsonPropertyName("expires_in")]
         public int ExpiresInSeconds { get; set; }
     }
 }

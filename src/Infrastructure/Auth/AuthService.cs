@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SubscriptionTracker.Application.DTOs;
@@ -20,7 +21,7 @@ namespace SubscriptionTracker.Infrastructure.Auth
             _config = config;
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+        public async Task<Guid> RegisterAsync(RegisterRequest request)
         {
             await using var uow = _uowFactory.Create();
             var existing = await uow.Users.GetByEmailAsync(request.Email);
@@ -55,7 +56,7 @@ namespace SubscriptionTracker.Infrastructure.Auth
                 CreatedAt = dto.CreatedAt
             };
 
-            return await CreateTokenAsync(userEntity);
+            return dto.UserId;
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -86,7 +87,24 @@ namespace SubscriptionTracker.Infrastructure.Auth
             var expiresMinutes = int.TryParse(_config["JWT:ExpiresMinutes"], out var m) ? m : 60;
 
             var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()), new Claim(JwtRegisteredClaimNames.Email, user.Email) };
-            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            byte[] signingKeyBytes;
+            if (key.IndexOfAny(new[] { '+', '/', '=' }) >= 0)
+            {
+                try { signingKeyBytes = Convert.FromBase64String(key); }
+                catch { signingKeyBytes = Encoding.UTF8.GetBytes(key); }
+            }
+            else
+            {
+                signingKeyBytes = Encoding.UTF8.GetBytes(key);
+            }
+
+            // Ensure key meets HS256 minimum size (256 bits). If it's shorter, derive a 256-bit key via SHA-256.
+            if (signingKeyBytes.Length < 32)
+            {
+                signingKeyBytes = SHA256.HashData(signingKeyBytes);
+            }
+
+            var signingKey = new SymmetricSecurityKey(signingKeyBytes);
             var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(issuer, audience, claims, expires: DateTime.UtcNow.AddMinutes(expiresMinutes), signingCredentials: creds);
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);

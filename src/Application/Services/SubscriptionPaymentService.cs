@@ -48,7 +48,7 @@ namespace SubscriptionTracker.Application.Services
             await uow.CommitAsync();
         }
 
-        public async Task AddPaymentAndUpdateSubscriptionAsync(SubscriptionPaymentDto payment, SubscriptionTracker.Application.DTOs.SubscriptionDto updatedSubscription)
+        public async Task AddPaymentAndUpdateSubscriptionAsync(SubscriptionPaymentDto payment, SubscriptionDto updatedSubscription)
         {
             await using var uow = _uowFactory.Create();
             try
