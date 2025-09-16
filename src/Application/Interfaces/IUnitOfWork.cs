@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace SubscriptionTracker.Application.Interfaces;
 
 public interface IUnitOfWork : IAsyncDisposable
@@ -14,6 +12,7 @@ public interface IUnitOfWork : IAsyncDisposable
     ISubscriptionPaymentRepository SubscriptionPayments { get; }
     ISubscriptionRatingRepository SubscriptionRatings { get; }
     ISubscriptionUsageRepository SubscriptionUsages { get; }
+    Application.Interfaces.IRefreshTokenRepository RefreshTokens { get; }
     IUserRepository Users { get; }
 
     Task CommitAsync();

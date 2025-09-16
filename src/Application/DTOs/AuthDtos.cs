@@ -30,5 +30,8 @@ namespace SubscriptionTracker.Application.DTOs
 
         [JsonPropertyName("expires_in")]
         public int ExpiresInSeconds { get; set; }
+
+        [JsonPropertyName("refresh_token")]
+        public string? RefreshToken { get; set; }
     }
 }

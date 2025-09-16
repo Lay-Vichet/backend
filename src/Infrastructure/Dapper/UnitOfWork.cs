@@ -19,6 +19,7 @@ public class UnitOfWork : IUnitOfWork
     public ISubscriptionRatingRepository SubscriptionRatings { get; }
     public ISubscriptionUsageRepository SubscriptionUsages { get; }
     public IUserRepository Users { get; }
+    public SubscriptionTracker.Application.Interfaces.IRefreshTokenRepository RefreshTokens { get; }
 
     public UnitOfWork(IDbTransactionScopeFactory txFactory, IDbConnectionFactory connectionFactory)
     {
@@ -37,6 +38,7 @@ public class UnitOfWork : IUnitOfWork
         SubscriptionRatings = new DapperSubscriptionRatingRepository(connectionFactory, _scope);
         SubscriptionUsages = new DapperSubscriptionUsageRepository(connectionFactory, _scope);
         Users = new DapperUserRepository(connectionFactory, _scope);
+        RefreshTokens = new SubscriptionTracker.Infrastructure.Repositories.DapperRefreshTokenRepository(connectionFactory, _scope);
     }
 
     public Task CommitAsync()

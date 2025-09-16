@@ -53,6 +53,7 @@ namespace SubscriptionTracker.Tests
             public ISubscriptionRatingRepository SubscriptionRatings => throw new NotImplementedException();
             public ISubscriptionUsageRepository SubscriptionUsages => throw new NotImplementedException();
             public IUserRepository Users => throw new NotImplementedException();
+            public IRefreshTokenRepository RefreshTokens => throw new NotImplementedException();
 
             public bool Committed { get; private set; }
             public bool RolledBack { get; private set; }
@@ -101,6 +102,8 @@ namespace SubscriptionTracker.Tests
                 public ISubscriptionRatingRepository SubscriptionRatings => _inner.SubscriptionRatings;
                 public ISubscriptionUsageRepository SubscriptionUsages => _inner.SubscriptionUsages;
                 public IUserRepository Users => _inner.Users;
+
+                public IRefreshTokenRepository RefreshTokens => _inner.RefreshTokens;
 
                 public Task CommitAsync() => _inner.CommitAsync();
                 public Task RollbackAsync() => _inner.RollbackAsync();

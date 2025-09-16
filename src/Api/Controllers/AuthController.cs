@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using SubscriptionTracker.Application.DTOs;
 using SubscriptionTracker.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SubscriptionTracker.Api.Controllers
 {
@@ -50,6 +51,29 @@ namespace SubscriptionTracker.Api.Controllers
             {
                 return Unauthorized(new { error = "Invalid credentials" });
             }
+        }
+
+        [HttpPost("refresh")]
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+        {
+            try
+            {
+                var res = await _authService.RefreshAsync(request);
+                return Ok(res);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
+            }
+        }
+
+        [Authorize(AuthenticationSchemes = "Bearer")]
+        [HttpPost("revoke")]
+        public async Task<IActionResult> Revoke([FromBody] RevokeRequest request)
+        {
+            await _authService.RevokeRefreshAsync(request);
+            return NoContent();
         }
     }
 }

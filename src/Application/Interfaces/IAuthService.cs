@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using SubscriptionTracker.Application.DTOs;
 
 namespace SubscriptionTracker.Application.Interfaces
@@ -7,5 +6,7 @@ namespace SubscriptionTracker.Application.Interfaces
     {
         Task<Guid> RegisterAsync(RegisterRequest request);
         Task<AuthResponse> LoginAsync(LoginRequest request);
+        Task<RefreshResponse> RefreshAsync(RefreshRequest request);
+        Task RevokeRefreshAsync(RevokeRequest request);
     }
 }

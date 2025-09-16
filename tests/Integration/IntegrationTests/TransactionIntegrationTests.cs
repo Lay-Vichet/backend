@@ -136,6 +136,8 @@ public class DbUnitOfWorkAdapter : IUnitOfWork
     public ISubscriptionUsageRepository SubscriptionUsages => throw new NotImplementedException();
     public IUserRepository Users { get; }
 
+    public IRefreshTokenRepository RefreshTokens => throw new NotImplementedException();
+
     public DbUnitOfWorkAdapter(IDbTransactionScopeFactory txFactory, IDbConnectionFactory connectionFactory)
     {
         _scope = txFactory.BeginTransaction();

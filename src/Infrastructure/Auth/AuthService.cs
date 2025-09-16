@@ -76,7 +76,55 @@ namespace SubscriptionTracker.Infrastructure.Auth
                 CreatedAt = user.CreatedAt
             };
 
-            return await CreateTokenAsync(userEntity);
+            var auth = await CreateTokenAsync(userEntity);
+            var refreshToken = GenerateSecureRefreshToken();
+            var expires = DateTime.UtcNow.AddDays(14);
+
+            // persist refresh token using UnitOfWork's repository bound to same scope
+            await uow.RefreshTokens.CreateAsync(user.UserId, refreshToken, expires);
+            await uow.CommitAsync();
+
+            return new AuthResponse { Token = auth.Token, ExpiresInSeconds = auth.ExpiresInSeconds, RefreshToken = refreshToken };
+        }
+
+        public async Task<RefreshResponse> RefreshAsync(RefreshRequest request)
+        {
+            // basic rotation: validate existing token, create new token, revoke old
+            var raw = request.RefreshToken;
+            if (string.IsNullOrEmpty(raw)) throw new UnauthorizedAccessException();
+
+            await using var uow = _uowFactory.Create();
+            var rec = await uow.RefreshTokens.GetByHashAsync(raw);
+            if (rec == null || rec.Revoked || rec.ExpiresAt < DateTime.UtcNow)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            // rotate
+            var newRaw = GenerateSecureRefreshToken();
+            var newExpires = DateTime.UtcNow.AddDays(14);
+            await uow.RefreshTokens.CreateAsync(rec.UserId, newRaw, newExpires);
+            await uow.RefreshTokens.RevokeAsync(rec.Id);
+            await uow.CommitAsync();
+
+            // generate new access token
+            var userDto = await uow.Users.GetByIdAsync(rec.UserId);
+            if (userDto == null) throw new UnauthorizedAccessException();
+            var userEntity = new Users { UserId = userDto.UserId, Email = userDto.Email, PasswordHash = userDto.PasswordHash, CreatedAt = userDto.CreatedAt };
+            var access = await CreateTokenAsync(userEntity);
+            return new RefreshResponse(access.Token, newRaw, access.ExpiresInSeconds);
+        }
+
+        public async Task RevokeRefreshAsync(RevokeRequest request)
+        {
+            var raw = request.RefreshToken;
+            if (string.IsNullOrEmpty(raw)) return;
+            await using var uow = _uowFactory.Create();
+            var rec = await uow.RefreshTokens.GetByHashAsync(raw);
+            if (rec != null)
+            {
+                await uow.RefreshTokens.RevokeAsync(rec.Id);
+            }
         }
 
         private Task<AuthResponse> CreateTokenAsync(Users user)
@@ -110,6 +158,13 @@ namespace SubscriptionTracker.Infrastructure.Auth
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
             return Task.FromResult(new AuthResponse { Token = tokenString, ExpiresInSeconds = expiresMinutes * 60 });
+        }
+
+        private static string GenerateSecureRefreshToken(int sizeBytes = 64)
+        {
+            var data = new byte[sizeBytes];
+            RandomNumberGenerator.Fill(data);
+            return Convert.ToBase64String(data);
         }
     }
 }
